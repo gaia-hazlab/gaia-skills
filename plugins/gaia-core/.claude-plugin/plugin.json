@@ -1,0 +1,18 @@
+{
+    "name": "gaia-core",
+    "version": "0.1.0",
+    "description": "Write, review and maintain GAIA HazLab agent skills and subagents in the gaia-skills repository",
+    "author": {
+        "name": "GAIA HazLab",
+        "url": "https://github.com/gaia-hazlab"
+    },
+    "repository": "https://github.com/gaia-hazlab/gaia-skills",
+    "license": "MIT",
+    "keywords": [
+        "gaia",
+        "geohazards",
+        "agent-skills",
+        "skill-authoring",
+        "review"
+    ]
+}

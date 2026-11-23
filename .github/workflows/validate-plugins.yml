@@ -1,0 +1,315 @@
+# Adapted from uw-ssec/savvy .github/workflows/validate-plugins.yml (BSD-3-Clause).
+name: Validate Plugins
+
+on:
+  pull_request:
+    paths:
+      - 'plugins/**'
+      - 'community-plugins/**'
+      - '.claude-plugin/**'
+      - '.agents/plugins/**'
+      - '.cursor-plugin/**'
+      - '*.md'
+      - 'docs/**'
+      - '.github/workflows/validate-plugins.yml'
+      - '.github/scripts/**'
+      - 'pixi.toml'
+      - 'pixi.lock'
+  push:
+    branches: [ main ]
+
+permissions: {}
+
+# A new push to a PR cancels that PR's older run, since its result no longer
+# matters. Runs on main are never cancelled: each merge keeps its own result,
+# so a failure points at the commit that caused it.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: prefix-dev/setup-pixi@ad1da6449d9e506fd127fd67ab2d054a769f6a94 # v0.11.2
+        with:
+          pixi-version: v0.82.0
+          environments: ci
+          locked: true
+
+      - name: Check Agent Plugins manifests and skills
+        run: |
+          # Fails on manifest drift (run `pixi run plugins-sync`),
+          # a plugin missing from or listed twice in the catalog, an invalid
+          # plugin.json or mcp.json, bad SKILL.md frontmatter, duplicate plugin
+          # or skill names, skill files or links that leave their skill
+          # directory, and relative links in any doc that point at nothing.
+          pixi run plugins-check
+
+      - name: Check the skill catalog
+        run: |
+          # Fails when a skill or plugin has no entry in docs/catalog.yml, or when
+          # docs/catalog.md is out of date (run `pixi run catalog-sync`).
+          pixi run catalog-check
+
+      - name: Check no scaffold placeholders remain
+        run: |
+          # Fails while any TODO(scaffold) marker from `pixi run new-skill` is left
+          # in a plugin or docs/catalog.yml.
+          pixi run scaffold-check
+
+      - name: Validate against the official Agent Plugins schemas
+        run: |
+          pixi run -e ci check-jsonschema --schemafile https://agent-plugins.org/schemas/1.0.0/plugin.schema.json \
+            plugins/*/plugin.json community-plugins/*/plugin.json
+          mcp=$(ls plugins/*/mcp.json community-plugins/*/mcp.json 2>/dev/null || true)
+          if [ -n "$mcp" ]; then
+            pixi run -e ci check-jsonschema --schemafile https://agent-plugins.org/schemas/1.0.0/mcp.schema.json $mcp
+          fi
+
+      - name: Validate with Claude Code
+        run: |
+          # agent_plugins.py --claude fails when Claude finds no manifest, even
+          # though `claude plugin validate` itself exits 0 in that case.
+          npm install -g '@anthropic-ai/claude-code@2.1.312'
+          pixi run plugins-check-claude
+
+      - name: Validate JSON files
+        run: |
+          echo "Validating JSON files..."
+          # Exclude tsconfig*.json files as they use JSONC (JSON with Comments),
+          # and the .pixi environment that setup-pixi installs in the checkout.
+          find . -path ./.pixi -prune -o -name "*.json" -not -name "tsconfig*.json" -type f -exec sh -c '
+            for file; do
+              echo "Checking $file"
+              if ! jq empty "$file" 2>/dev/null; then
+                echo "Invalid JSON: $file"
+                exit 1
+              fi
+            done
+          ' sh {} +
+
+      - name: Check for duplicate JSON keys
+        run: |
+          echo "Checking for duplicate JSON keys..."
+          # `jq empty` above accepts duplicate keys (JSON parsers keep the last
+          # value), so a duplicated key silently collapses two objects into one.
+          # In marketplace.json that can drop a plugin from the catalog — and thus
+          # from the catalog-driven scans below — with no validation error.
+          pixi run -e ci python .github/scripts/check_duplicate_json_keys.py .
+
+      - name: Check plugin structure
+        run: |
+          echo "Checking plugin structure..."
+          # Get all local plugin sources from marketplace catalog
+          while IFS= read -r source; do
+            if [[ "$source" == ./* ]]; then
+              plugin="$source"
+              echo "Validating $plugin"
+
+              # Check for plugin.json
+              if [ ! -f "$plugin/.claude-plugin/plugin.json" ]; then
+                echo "Missing .claude-plugin/plugin.json in $plugin"
+                exit 1
+              fi
+
+              # Check for README
+              if [ ! -f "$plugin/README.md" ]; then
+                echo "Missing README.md in $plugin"
+                exit 1
+              fi
+
+              # Check scripts are executable
+              if [ -d "$plugin/scripts" ]; then
+                while IFS= read -r script; do
+                  if [ ! -x "$script" ]; then
+                    echo "Script not executable: $script"
+                    exit 1
+                  fi
+                done < <(find "$plugin/scripts" -type f -name "*.sh")
+              fi
+            fi
+          done < <(jq -r '.plugins[].source' .claude-plugin/marketplace.json)
+
+      - name: Security scan - Detect hardcoded secrets
+        run: |
+          echo "Scanning for hardcoded secrets..."
+          FOUND_SECRETS=0
+
+          # Get all local plugin directories from marketplace
+          PLUGIN_DIRS=$(jq -r '.plugins[].source | select(startswith("./"))' .claude-plugin/marketplace.json | tr '\n' ' ')
+          if [ -z "$PLUGIN_DIRS" ]; then
+            echo "No local plugins to scan"
+            exit 0
+          fi
+
+          # Check for common secret patterns, but exclude:
+          # - Placeholders ("***", "xxx", "placeholder", etc.)
+          # - Password generation commands (openssl rand, pwgen, etc.)
+          # - Example/test values
+          # - Dynamic generation (random.choice, secrets.choice, etc.)
+          MATCHES=$(grep -r -E "(password|secret|api_key|token)(\s*)=(\s*)['\"](" $PLUGIN_DIRS 2>/dev/null | \
+            grep -v '= "\*\*\*"' | \
+            grep -v "= '\*\*\*'" | \
+            grep -v '= "xxx"' | \
+            grep -v '= "XXX"' | \
+            grep -v 'placeholder' | \
+            grep -v 'PLACEHOLDER' | \
+            grep -v 'example' | \
+            grep -v 'EXAMPLE' | \
+            grep -v 'your-' | \
+            grep -v 'YOUR_' | \
+            grep -v 'test-' | \
+            grep -v 'openssl rand' | \
+            grep -v 'pwgen' | \
+            grep -v 'random.choice' | \
+            grep -v 'secrets.choice' | \
+            grep -v '\$(' | \
+            grep -E "['\"][^'\"]{20,}" || true)
+
+          if [ -n "$MATCHES" ]; then
+            echo "⚠️  WARNING: Potential hardcoded secrets detected!"
+            echo "$MATCHES"
+            echo "Please review the above matches and use environment variables instead."
+            FOUND_SECRETS=1
+          fi
+
+          # Check for AWS keys (critical - always fail)
+          # Exclude official AWS example key: AKIAIOSFODNN7EXAMPLE
+          AWS_KEYS=$(grep -r -E "AKIA[0-9A-Z]{16}" $PLUGIN_DIRS 2>/dev/null | grep -v "AKIAIOSFODNN7EXAMPLE" || true)
+          if [ -n "$AWS_KEYS" ]; then
+            echo "❌ ERROR: AWS Access Key detected!"
+            echo "$AWS_KEYS"
+            exit 1
+          fi
+
+          # Check for private keys (critical - always fail)
+          # Exclude README and SKILL files (documentation of patterns to look for)
+          # Exclude tests/, CHANGES.md, and security pattern definitions (redact.py)
+          PRIVATE_KEYS=$(grep -r "BEGIN.*PRIVATE KEY" $PLUGIN_DIRS 2>/dev/null | grep -v "README.md" | grep -v "SKILL.md" | grep -v "Pattern:" | grep -v "/tests/" | grep -v "CHANGES.md" | grep -v "redact.py" || true)
+          if [ -n "$PRIVATE_KEYS" ]; then
+            echo "❌ ERROR: Private key detected!"
+            echo "$PRIVATE_KEYS"
+            exit 1
+          fi
+
+          if [ $FOUND_SECRETS -eq 0 ]; then
+            echo "✅ No hardcoded secrets detected"
+          else
+            echo "⚠️  Review warnings above, but not blocking CI"
+          fi
+
+      - name: Security scan - Dangerous patterns
+        run: |
+          echo "Scanning for dangerous command patterns..."
+          FOUND_ISSUES=0
+
+          # Get all local plugin directories from marketplace
+          PLUGIN_DIRS=$(jq -r '.plugins[].source | select(startswith("./"))' .claude-plugin/marketplace.json | tr '\n' ' ')
+          if [ -z "$PLUGIN_DIRS" ]; then
+            echo "No local plugins to scan"
+            exit 0
+          fi
+
+          # Check for destructive commands (only root deletion, not /var/... paths)
+          # Match: rm -rf / or rm -rf /* but NOT rm -rf /var/... etc.
+          DANGEROUS_RM=$(grep -r -E "rm\s+-rf\s+/(\s|$|\*)" $PLUGIN_DIRS 2>/dev/null | grep -v "/var/" | grep -v "/tmp/" | grep -v "/prometheus/" || true)
+          if [ -n "$DANGEROUS_RM" ]; then
+            echo "❌ ERROR: Dangerous 'rm -rf /' pattern detected!"
+            echo "$DANGEROUS_RM"
+            FOUND_ISSUES=1
+          fi
+
+          # Check for command injection risks (exclude README documentation)
+          EVAL_USES=$(grep -r -E "eval\s*\(" $PLUGIN_DIRS 2>/dev/null | grep -v "README.md" | grep -v "this.redis.eval" || true)
+          if [ -n "$EVAL_USES" ]; then
+            echo "⚠️  WARNING: 'eval()' detected - potential command injection risk"
+            echo "$EVAL_USES"
+          fi
+
+          # Check for suspicious curl/wget to unknown domains
+          if grep -r -E "curl.*http://[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" $PLUGIN_DIRS 2>/dev/null; then
+            echo "⚠️  WARNING: curl to IP address detected - potential data exfiltration"
+            FOUND_ISSUES=1
+          fi
+
+          # Check for base64 encoded content (potential obfuscation)
+          # Exempt only a line that is exactly `--jq '.content' | base64 -d`: the
+          # continuation of `gh api .../contents/...` that incident-response
+          # runbooks use to print a workflow file. Anything after the decode,
+          # such as `| sh`, is still flagged.
+          if grep -r -E "base64\s+-d" $PLUGIN_DIRS 2>/dev/null | grep -v -E "^[^:]+:[[:space:]]*--jq '\.content' \| base64 -d[[:space:]]*$"; then
+            echo "⚠️  WARNING: base64 decoding detected - potential obfuscation"
+            FOUND_ISSUES=1
+          fi
+
+          if [ $FOUND_ISSUES -eq 0 ]; then
+            echo "✅ No dangerous patterns detected"
+          else
+            exit 1
+          fi
+
+      - name: Security scan - Suspicious URLs
+        run: |
+          echo "Scanning for suspicious URLs..."
+
+          # Get all local plugin directories from marketplace
+          PLUGIN_DIRS=$(jq -r '.plugins[].source | select(startswith("./"))' .claude-plugin/marketplace.json | tr '\n' ' ')
+          if [ -z "$PLUGIN_DIRS" ]; then
+            echo "No local plugins to scan"
+            exit 0
+          fi
+
+          # Check for non-HTTPS URLs (except localhost)
+          if grep -r -E "http://" $PLUGIN_DIRS 2>/dev/null | grep -v "localhost" | grep -v "127.0.0.1"; then
+            echo "⚠️  WARNING: Non-HTTPS URLs detected (security risk)"
+          fi
+
+          # Check for URL shorteners (potential phishing)
+          if grep -r -E "(bit\.ly|tinyurl\.com|goo\.gl)" $PLUGIN_DIRS 2>/dev/null; then
+            echo "⚠️  WARNING: URL shorteners detected (potential phishing)"
+          fi
+
+          echo "✅ URL scan complete"
+
+      - name: Security scan - MCP plugin dependencies
+        run: |
+          echo "Scanning MCP plugin dependencies..."
+
+          # Get all local plugin directories from marketplace
+          PLUGIN_DIRS=$(jq -r '.plugins[].source | select(startswith("./"))' .claude-plugin/marketplace.json)
+          if [ -z "$PLUGIN_DIRS" ]; then
+            echo "No local plugins to scan"
+            exit 0
+          fi
+
+          FOUND_PACKAGES=0
+          while IFS= read -r plugin_dir; do
+            # Find all package.json files in plugin directories
+            while IFS= read -r package; do
+              FOUND_PACKAGES=1
+              echo "Checking $package"
+              dir=$(dirname "$package")
+              cd "$dir"
+
+              # Check for npm audit (fail on high/critical vulnerabilities, allow low/moderate)
+              if command -v npm &> /dev/null; then
+                npm audit --production --audit-level=high
+              fi
+
+              cd - > /dev/null
+            done < <(find "$plugin_dir" -name "package.json" -type f)
+          done < <(echo "$PLUGIN_DIRS")
+
+          if [ $FOUND_PACKAGES -eq 0 ]; then
+            echo "No package.json files found"
+          else
+            echo "✅ Dependency scan complete"
+          fi
