@@ -1,0 +1,49 @@
+name: New skill or agent idea
+description: Propose a skill or subagent for gaia-skills, or claim one you plan to write.
+labels: ["new-skill"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe a workflow you want an agent to be able to do correctly. If you plan to write it
+        yourself, say so and assign yourself.
+  - type: textarea
+    id: task
+    attributes:
+      label: Task
+      description: What should the agent be able to do, and what does it produce?
+      placeholder: Build an InSAR time-series stack from HyP3 products for a region and date range...
+    validations:
+      required: true
+  - type: textarea
+    id: phrasings
+    attributes:
+      label: How would someone ask for it?
+      description: Three or four requests a user would actually type.
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Code, data and references
+      description: Repositories, notebooks, packages, data providers, papers the skill should draw on. No credentials or private paths.
+    validations:
+      required: false
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      multiple: true
+      options:
+        - Skill
+        - Subagent
+        - Command
+    validations:
+      required: true
+  - type: input
+    id: plugin
+    attributes:
+      label: Plugin
+      description: Existing plugin it belongs in (see docs/catalog.md), or a proposed new plugin name.
+    validations:
+      required: false

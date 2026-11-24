@@ -1,0 +1,22 @@
+{
+    "name": "gaia-skills",
+    "owner": {
+        "name": "GAIA HazLab",
+        "url": "https://github.com/gaia-hazlab"
+    },
+    "metadata": {
+        "description": "Agent plugins for GAIA HazLab: skills, subagents and commands for climate-compounded geohazard research"
+    },
+    "plugins": [
+        {
+            "name": "gaia-core",
+            "source": "./plugins/gaia-core",
+            "description": "Write, review and maintain GAIA HazLab agent skills and subagents in the gaia-skills repository"
+        },
+        {
+            "name": "gaia-data-downloader",
+            "source": "./community-plugins/gaia-data-downloader",
+            "description": "Generate and develop hydroclimatological data download scripts for GAIA geoscience research"
+        }
+    ]
+}

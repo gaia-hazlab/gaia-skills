@@ -1,0 +1,31 @@
+[workspace]
+name = "gaia-skills"
+version = "0.1.0"
+description = "GAIA HazLab agent plugins: skills, subagents and commands for climate-compounded geohazard research"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+
+[tasks]
+
+# Repository tooling, adapted from uw-ssec/savvy. Everything runs in the `ci`
+# environment, so contributors need pixi and nothing else.
+[feature.ci.dependencies]
+python = "3.12.*"
+pyyaml = "6.0.3.*"
+pytest = "9.2.0.*"
+check-jsonschema = "0.38.2.*"
+
+[feature.ci.tasks]
+new-skill = { cmd = "python .github/scripts/new_skill.py", description = "Scaffold a skill (and its plugin if new): `pixi run new-skill <plugin> <skill> --maintainer @you`" }
+plugins-sync = { cmd = "python .github/scripts/agent_plugins.py sync", description = "Regenerate the generated plugin manifests and marketplaces" }
+plugins-check = { cmd = "python .github/scripts/agent_plugins.py check", description = "Check plugin manifests, skills and links (CI gate)" }
+plugins-check-claude = { cmd = "python .github/scripts/agent_plugins.py check --claude", description = "Run plugins-check plus `claude plugin validate --strict`" }
+catalog-sync = { cmd = "python .github/scripts/skill_catalog.py sync", description = "Regenerate docs/catalog.md from SKILL.md frontmatter and docs/catalog.yml" }
+catalog-check = { cmd = "python .github/scripts/skill_catalog.py check", description = "Check docs/catalog.md is current and every skill has a catalog entry (CI gate)" }
+scaffold-check = { cmd = "python .github/scripts/new_skill.py --check", description = "Fail if any scaffold placeholder (TODO(scaffold)) is left in a plugin or docs/catalog.yml" }
+sync = { depends-on = ["plugins-sync", "catalog-sync"], description = "Regenerate every generated file" }
+test-scripts = { cmd = "pytest .github/scripts/tests -q", description = "Run the CI script tests" }
+check-all = { depends-on = ["plugins-check", "catalog-check", "scaffold-check", "test-scripts"], description = "Run every offline CI gate" }
+
+[environments]
+ci = { features = ["ci"], no-default-feature = true }

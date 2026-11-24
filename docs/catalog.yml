@@ -1,0 +1,52 @@
+# Metadata for docs/catalog.md that SKILL.md frontmatter doesn't carry.
+#
+# docs/catalog.md is generated from this file plus every SKILL.md, command and
+# agent. After editing either, run `pixi run sync` and commit both files.
+# CI (`pixi run catalog-check`) fails if a skill has no example prompt, a plugin
+# has no tier or maintainer, or docs/catalog.md is out of date.
+# `pixi run new-skill` adds the entries below for you.
+#
+# For each plugin:
+#   tier:        Core or Community (keys under `tiers`).
+#   released:    set to false while the plugin isn't ready to ship. It is still
+#                checked, but no marketplace lists it and docs/catalog.md leaves
+#                it out; keep its entry out of .claude-plugin/marketplace.json.
+#   maintainer:  GitHub handle that owns the plugin's skills. A skill can
+#                override it with its own `maintainer:`.
+#   skills.<name>.example:
+#                a prompt a user would type that should activate the skill.
+#                Try it in Claude Code with the plugin loaded before adding it:
+#                `claude --plugin-dir <plugin-dir>`.
+#   skills.<name>.activates / issue:
+#                set `activates: false` and an issue number when no reasonable
+#                prompt activated the skill in testing. Fix the description and
+#                remove the flag rather than leaving it.
+
+tiers:
+  Core: >-
+    Cross-cutting GAIA conventions and tooling (data staging, catalogs,
+    provenance, evaluation). Maintained by the GAIA leads; reviewed against
+    the full security checklist.
+  Community: >-
+    A group member's own plugin for their domain, data or code (seismology,
+    hydrology, geodesy, SAR, landslides, debris flows and so on). The author
+    maintains it. Reviewed on entry and must pass CI.
+
+plugins:
+  # --- Core ------------------------------------------------------------------
+
+  gaia-core:
+    tier: Core
+    maintainer: "@mdenolle"
+    skills:
+      authoring-gaia-skills:
+        example: I have a notebook workflow for picking landslide seismic signals that I want to turn into a skill in the gaia-skills repo. Help me write the SKILL.md.
+
+  # --- Community -------------------------------------------------------------
+
+  gaia-data-downloader:
+    tier: Community
+    maintainer: "@gaia-hazlab"
+    skills:
+      download-script-dev:
+        example: Develop a download script for CONUS404 precipitation over Washington State for 2020.
