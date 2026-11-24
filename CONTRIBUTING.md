@@ -47,6 +47,8 @@ You need [pixi](https://pixi.sh) and a clone of this repository. Work on a branc
    security checklist below. The `skill-reviewer` agent in `gaia-core` runs most of that
    review; run it yourself first.
 
+Adding an agent? [docs/adding-an-agent.md](docs/adding-an-agent.md) is the step-by-step guide.
+
 ## What a plugin looks like
 
 ```text

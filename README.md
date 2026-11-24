@@ -48,7 +48,8 @@ pixi install -e ci
 pixi run new-skill <plugin> <skill> --maintainer @your-github-handle
 ```
 
-Then follow [CONTRIBUTING.md](CONTRIBUTING.md). With the `gaia-core` plugin installed you can also
+Then follow [CONTRIBUTING.md](CONTRIBUTING.md). To add an agent (a Claude Code subagent), follow
+[docs/adding-an-agent.md](docs/adding-an-agent.md). With the `gaia-core` plugin installed you can also
 ask Claude Code "help me turn my notebook into a gaia skill" and it will walk you through it.
 
 ## Related repositories
