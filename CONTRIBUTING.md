@@ -1,53 +1,16 @@
 # Contributing to gaia-skills
 
-Every GAIA group member is welcome to add plugins here. This page covers how to add a skill,
-the rules the checks enforce, and the security review every change gets before it merges.
+Every GAIA group member is welcome to add plugins here. This page covers the rules the checks
+enforce and the security review every change gets before it merges.
 
-## Add a skill in five steps
+## Where to start
 
-You need [pixi](https://pixi.sh) and a clone of this repository. Work on a branch.
+- **[Contributor guide](docs/contributor-guide.md)**: the step-by-step walkthrough, from setup
+  to adding a skill, a command or reference files, the pull request, and maintaining your plugin.
+- **[Adding an agent](docs/adding-an-agent.md)**: the walkthrough for subagents.
 
-1. **Install the tooling** (once):
-
-   ```bash
-   pixi install -e ci
-   ```
-
-2. **Scaffold.** Pick a plugin (your domain, e.g. `gaia-seismic-monitoring`) and a skill name
-   that says the task (`picking-landslide-signals`). If the plugin doesn't exist yet the script
-   creates it, with you as maintainer:
-
-   ```bash
-   pixi run new-skill <plugin> <skill> --maintainer @your-github-handle
-   # --agent <name>  also create a subagent that preloads the skill
-   # --core          only for cross-cutting GAIA tooling (ask the leads first)
-   ```
-
-   This writes `community-plugins/<plugin>/` with `plugin.json`, `README.md`, `LICENSE` and
-   `skills/<skill>/SKILL.md`, and adds the plugin to `.claude-plugin/marketplace.json` and
-   `docs/catalog.yml`.
-
-3. **Fill every `TODO(scaffold)` marker**: the skill's `description` and body, the plugin
-   `description` in `plugin.json`, the plugin README, and the `example:` prompt in
-   `docs/catalog.yml`. The `authoring-gaia-skills` skill in `gaia-core` explains what makes a
-   good description and body; with that plugin installed, ask Claude Code to help.
-
-4. **Check and try it**:
-
-   ```bash
-   pixi run sync                      # regenerate manifests and docs/catalog.md
-   pixi run check-all                 # the same gates CI runs
-   claude --plugin-dir community-plugins/<plugin>
-   ```
-
-   In that Claude Code session, type your catalog example and confirm the skill loads. If it
-   doesn't, rewrite the description.
-
-5. **Open a pull request** and fill in the template. A maintainer reviews it against the
-   security checklist below. The `skill-reviewer` agent in `gaia-core` runs most of that
-   review; run it yourself first.
-
-Adding an agent? [docs/adding-an-agent.md](docs/adding-an-agent.md) is the step-by-step guide.
+This page is the reference those guides point to: plugin layout, the rules the checks enforce,
+writing guidance, and the security review checklist.
 
 ## What a plugin looks like
 
@@ -157,8 +120,9 @@ looks deliberately malicious privately as described in [SECURITY.md](SECURITY.md
 ## Changelog and versions
 
 Add a line to [CHANGELOG.md](CHANGELOG.md) under `## [Unreleased]` for the plugin you changed.
-Bump a plugin's `version` in its `plugin.json` when you change its behaviour (patch for fixes,
-minor for new skills), then run `pixi run sync`.
+Bump a plugin's `version` in its `plugin.json` whenever you change it (patch for fixes, minor
+for new skills, agents or commands), then run `pixi run sync`. Claude Code updates an installed
+plugin only when its `version` changes, so a change merged without a bump never reaches users.
 
 ## AI-assisted contributions
 

@@ -8,6 +8,7 @@ changes no plugin.
 
 ### Repository
 
+- User guide (`docs/user-guide.md`) and contributor guide (`docs/contributor-guide.md`); CONTRIBUTING.md now points to the contributor guide for the walkthrough. Corrected `docs/adding-an-agent.md`: `/agents` does not list subagents, use `claude plugin details`.
 - Guide for adding an agent: `docs/adding-an-agent.md`, linked from README and CONTRIBUTING.
 - Repository scaffold following uw-ssec/savvy: marketplace manifests for Claude Code, Codex and
   Cursor, generated skill catalog, `new-skill` scaffolder, Validate Plugins CI.
