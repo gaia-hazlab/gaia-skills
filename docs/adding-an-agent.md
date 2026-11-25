@@ -210,7 +210,7 @@ Fill in the pull request template: what the agent may run, how you tested it, an
 AI assistant wrote. Before asking for review, run the reviewer agent from `gaia-core` on your
 plugin (install it with `claude plugin install gaia-core@gaia-skills`):
 
-> Use the skill-reviewer agent to review community-plugins/&lt;plugin&gt;
+`Use the skill-reviewer agent to review community-plugins/<plugin>`
 
 Fix what it finds, then request a review. A maintainer checks the pull request against the
 security checklist before merging.
