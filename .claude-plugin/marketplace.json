@@ -50,6 +50,29 @@
             ],
             "category": "community",
             "strict": false
+        },
+        {
+            "name": "gaia-seismology",
+            "source": "./community-plugins/gaia-seismology",
+            "description": "Seismology workflows for GAIA HazLab: find and correct timing errors in seismic phase picks (day-merge sample-count drift and station clock errors)",
+            "author": {
+                "name": "GAIA HazLab",
+                "url": "https://github.com/gaia-hazlab"
+            },
+            "repository": "https://github.com/gaia-hazlab/gaia-skills",
+            "license": "MIT",
+            "keywords": [
+                "gaia",
+                "geohazards",
+                "seismology",
+                "phase-picks",
+                "clock-errors",
+                "miniseed",
+                "obspy",
+                "nonlinloc"
+            ],
+            "category": "community",
+            "strict": false
         }
     ]
 }

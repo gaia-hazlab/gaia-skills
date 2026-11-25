@@ -27,6 +27,18 @@
                 "authentication": "ON_INSTALL"
             },
             "category": "Community"
+        },
+        {
+            "name": "gaia-seismology",
+            "source": {
+                "source": "local",
+                "path": "./community-plugins/gaia-seismology"
+            },
+            "policy": {
+                "installation": "AVAILABLE",
+                "authentication": "ON_INSTALL"
+            },
+            "category": "Community"
         }
     ]
 }

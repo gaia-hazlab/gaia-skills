@@ -50,3 +50,10 @@ plugins:
     skills:
       download-script-dev:
         example: Develop a download script for CONUS404 precipitation over Washington State for 2020.
+
+  gaia-seismology:
+    tier: Community
+    maintainer: "@mdenolle"
+    skills:
+      correcting-pick-timing:
+        example: The NonLinLoc residuals at one of my ocean-bottom stations jump by about half a second for a few months. Check my phase picks for station clock drift and correct the pick times.
