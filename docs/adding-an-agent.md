@@ -167,10 +167,15 @@ pixi run check-all
 claude --plugin-dir community-plugins/<plugin>
 ```
 
-Inside that session:
+First check that Claude Code sees the agent. In a terminal:
 
-- Type `/agents` and check that your agent is listed. Plugin agents show up as
-  `<plugin>:<agent>`.
+```bash
+claude --plugin-dir community-plugins/<plugin> plugin details <plugin>
+```
+
+Your agent should appear under **Agents** in the component inventory. Inside a session it is
+named `<plugin>:<agent>`. Then, inside that session:
+
 - Ask for it by name: *"Use the landslide-signal-picker agent to pick signals at two Mount
   Rainier stations for March 2025."* It should start with its proposal and wait for you.
 - Then ask without naming it, the way a colleague would. Don't expect this to delegate every
@@ -223,7 +228,7 @@ security checklist before merging.
 | `scaffold placeholder(s) left` | Run `pixi run scaffold-check` and replace each listed `TODO(scaffold)` |
 | `docs/catalog.md is out of date` or manifest drift | Run `pixi run sync` and commit the changed files |
 | `description` length error (skills) | 100 to 1024 characters: say what it does, then "Use when ..." with real phrasings |
-| Agent missing from `/agents` | File must be in `<plugin-dir>/agents/`, end in `.md`, and start with a `---` frontmatter block |
+| Agent missing from the `plugin details` inventory | File must be in `<plugin-dir>/agents/`, end in `.md`, and start with a `---` frontmatter block |
 | Claude doesn't delegate unless the agent is named | Normal for small tasks. For long jobs, make `description` say concretely when to use it and what it returns, naming the data and tools users mention |
 | Agent works in Claude Code but colleagues on Copilot get nothing | Expected: Copilot and Codex don't load agents. Make sure the method is in the skill |
 

@@ -52,6 +52,16 @@ Then follow [CONTRIBUTING.md](CONTRIBUTING.md). To add an agent (a Claude Code s
 [docs/adding-an-agent.md](docs/adding-an-agent.md). With the `gaia-core` plugin installed you can also
 ask Claude Code "help me turn my notebook into a gaia skill" and it will walk you through it.
 
+## Documentation
+
+| Guide | For |
+| --- | --- |
+| [User guide](docs/user-guide.md) | Installing and using GAIA plugins, setting them up for a project, updating, troubleshooting |
+| [Contributor guide](docs/contributor-guide.md) | Adding a skill, command or reference material, and the review process |
+| [Adding an agent](docs/adding-an-agent.md) | Adding a Claude Code subagent |
+| [Skill catalog](docs/catalog.md) | Every plugin, skill, agent and command, with example requests |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Rules the checks enforce and the security review checklist |
+
 ## Related repositories
 
 - [gaia-agentic-ai](https://github.com/gaia-hazlab/gaia-agentic-ai): the GAIA agent project,
