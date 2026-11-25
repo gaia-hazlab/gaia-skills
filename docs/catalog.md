@@ -3,7 +3,7 @@
 
 # Skill catalog
 
-Every skill, command, and agent in a released plugin: 2 skills, 0 commands, and 2 agents across 2 plugins.
+Every skill, command, and agent in a released plugin: 3 skills, 0 commands, and 2 agents across 3 plugins.
 
 Skills activate on their own. Claude reads each skill's `description` and loads the skill when
 your request matches it, so you don't call a skill by name. The **Trigger phrases** column is
@@ -29,6 +29,7 @@ To report a problem with a skill, open an issue and mention its maintainer.
 | --- | --- | ---: | ---: | ---: | --- |
 | Core | [gaia-core](#gaia-core) | 1 | 0 | 1 | @mdenolle |
 | Community | [gaia-data-downloader](#gaia-data-downloader) | 1 | 0 | 1 | @gaia-hazlab |
+| Community | [gaia-seismology](#gaia-seismology) | 1 | 0 | 0 | @mdenolle |
 
 ## Core plugins
 
@@ -57,3 +58,11 @@ Source: [`community-plugins/gaia-data-downloader`](../community-plugins/gaia-dat
 **Agents.** Claude delegates to an agent when the task fits; to choose one yourself, ask for it by name (for example, "use the data-downloader agent to ...").
 
 - [`data-downloader`](../community-plugins/gaia-data-downloader/agents/data-downloader.md): Use this agent when the user needs to generate data download scripts for hydroclimatological data sources including CONUS404, HRRR, WRF-CMIP6, PRISM, Stage IV, USGS, ORNL DAYMET, DEM/SRTM, Synoptic, or IRIS seismic data.
+
+### gaia-seismology
+
+Source: [`community-plugins/gaia-seismology`](../community-plugins/gaia-seismology). Maintainer: @mdenolle.
+
+| Tier | Plugin | Skill | What it does | Trigger phrases | Example prompt | Maintainer |
+| --- | --- | --- | --- | --- | --- | --- |
+| Community | gaia-seismology | [`correcting-pick-timing`](../community-plugins/gaia-seismology/skills/correcting-pick-timing/SKILL.md) | Finds and corrects timing errors in seismic phase picks with the pick_timing toolkit (ObsPy, MiniSEED record headers, NonLinLoc or other travel-time residuals, optional cross-correlation differential times). | “check pick timing”, “find station clock drift”, “correct clock errors in picks”, “re-time picks”, “screen stations for timing problems” | The NonLinLoc residuals at one of my ocean-bottom stations jump by about half a second for a few months. Check my phase picks for station clock drift and correct the pick times. | @mdenolle |

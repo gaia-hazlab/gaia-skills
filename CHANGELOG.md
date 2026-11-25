@@ -19,3 +19,8 @@ changes no plugin.
 ### gaia-data-downloader
 
 - Ported from uw-ssec/savvy at commit `e1084bb`, where it was unreleased.
+
+### gaia-seismology
+
+- New plugin: `correcting-pick-timing` skill, with the `pick_timing` 0.1.0 package bundled from
+  Denolle-Lab/cascadia_obs_ensemble at commit `a8f6d5f1`.

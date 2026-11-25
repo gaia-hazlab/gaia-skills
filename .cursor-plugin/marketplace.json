@@ -17,6 +17,11 @@
             "name": "gaia-data-downloader",
             "source": "./community-plugins/gaia-data-downloader",
             "description": "Generate and develop hydroclimatological data download scripts for GAIA geoscience research"
+        },
+        {
+            "name": "gaia-seismology",
+            "source": "./community-plugins/gaia-seismology",
+            "description": "Seismology workflows for GAIA HazLab: find and correct timing errors in seismic phase picks (day-merge sample-count drift and station clock errors)"
         }
     ]
 }
